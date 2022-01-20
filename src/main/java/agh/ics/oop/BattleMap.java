@@ -8,15 +8,27 @@ public class BattleMap {
     protected int width;
     protected int height;
     protected int shipsLeft;
-//    protected int moves;
-//    protected LinkedList<Ship> shipsList = new LinkedList<>();
     protected HashMap<Vector2d, Cell> hashMap = new HashMap<>();
 
+    //CONSTRUCTOR
     public BattleMap(int width, int height){
         this.width = width;
         this.height = height;
     }
+    //HASHMAP
+    public void addToMap(Ship ship){
+        for (Vector2d pos: ship.position){
+            Cell cell = new Cell(pos, CellStatus.AFLOAT, ship);
+            this.hashMap.put(pos, cell);
+        }
+    }
+    public void removeFromMap(Vector2d[] positions){
+        for (Vector2d pos: positions){
+            this.hashMap.remove(pos);
+        }
+    }
 
+    //METHODS HANDLING PLACING OF THE SHIPS
     private Vector2d[] getNeighbors(Vector2d position) {
         Vector2d[] positions = new Vector2d[] {
                 position.add(new Vector2d(-1, 0)),
@@ -32,9 +44,8 @@ public class BattleMap {
         }
         return result.toArray(new Vector2d[0]);
     }
-
     public boolean isInBound(Vector2d position){
-        return position.x >= 0 && position.x < this.width && position.y >= 0 && position.x < this.height;
+        return position.x >= 0 && position.x < this.width && position.y >= 0 && position.y < this.height;
     }
     public boolean isValidPoint(Vector2d position){
         if (!isInBound(position))
@@ -49,16 +60,7 @@ public class BattleMap {
         }
         return true;
     }
-
-    public boolean canPlaceShip(){
-
-
-
-        return true;
-    }
-
     public void placeShip(Ship ship, Vector2d[] position){
-        //if canPlaceShip if calling from outside
         for (Vector2d pos: position){
             Cell cell = new Cell(pos, CellStatus.AFLOAT, ship);
             this.hashMap.put(pos, cell);
@@ -158,8 +160,6 @@ public class BattleMap {
 
         return null;
     }
-
-
     private boolean randomlyPlaceShip(int length){
         Vector2d[] randomPos = getRandomPositionToPlaceShip(length);
         if (randomPos == null) return false;
@@ -180,6 +180,16 @@ public class BattleMap {
         for (int i = 0; i < noDestroyers; i++){
             if (!randomlyPlaceShip(2))
                 return false;
+        }
+        return true;
+    }
+
+    //USED WHEN MOVING SHIP
+    public boolean canPlaceShip(Ship ship){
+        for(Vector2d pos: ship.position){
+            if (!isValidPoint(pos)){
+                return false;
+            }
         }
         return true;
     }

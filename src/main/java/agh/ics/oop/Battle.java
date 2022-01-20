@@ -1,6 +1,5 @@
 package agh.ics.oop;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -16,7 +15,7 @@ public class Battle {
     protected LinkedList<Vector2d> foundShipCoordinates = new LinkedList<>();
     protected int direction = -1;
 
-
+    //CONSTRUCTOR
     public Battle(int width, int height, int moves, boolean hardMode){
         this.computerMap = new BattleMap(width, height);
         this.playerMap = new BattleMap(width, height);
@@ -25,7 +24,9 @@ public class Battle {
         this.moves = moves;
         this.hardMode = hardMode;
     }
-    public CellStatus getCell(boolean playerMap, Vector2d pos){
+
+    //GETTERS
+    public CellStatus getCellStatus(boolean playerMap, Vector2d pos){
         if (playerMap){
             if (!this.playerMap.hashMap.containsKey(pos))
                 return CellStatus.EMPTY;
@@ -35,6 +36,12 @@ public class Battle {
             return CellStatus.EMPTY;
         return this.computerMap.hashMap.get(pos).cellStatus;
     }
+    public Ship getShip(Vector2d pos){
+        return this.playerMap.hashMap.get(pos).ship;
+    }
+    public BattleMap getPlayerMap(){
+        return this.playerMap;
+    }
     public int getComputerScore(){
         return this.computerScore;
     }
@@ -42,10 +49,13 @@ public class Battle {
         return this.playerScore;
     }
 
+    //RANDOMLY PLACE SHIPS ON BOTH MAPS
     public boolean setUpMaps(int noCuirassiers, int noCruisers, int noDestroyers){
         if (!this.computerMap.randomlyPlaceShips(noCuirassiers, noCruisers, noDestroyers)) return false;
         return this.playerMap.randomlyPlaceShips(noCuirassiers, noCruisers, noDestroyers);
     }
+
+    //HANDLES PLAYER TURN
     public boolean playerTurn(Vector2d position){
         //missed
         if (!this.computerMap.hashMap.containsKey(position)){
@@ -67,10 +77,10 @@ public class Battle {
             }else {
                 cell.cellStatus = CellStatus.SHIPHIT;
             }
-
         }
         return false;
     }
+
 
 
     //AI
@@ -78,7 +88,6 @@ public class Battle {
         Random generator = new Random();
         //ship has been hit in the past
         if (this.foundShipCoordinates.size() > 0){
-            //make smart choice here
             Vector2d[] candidates = {};
             if (this.foundShipCoordinates.size() == 1){
                 candidates = this.getNeighbors(this.foundShipCoordinates.getFirst());
@@ -103,20 +112,20 @@ public class Battle {
                 }
             }
 
-            System.out.println(Arrays.toString(candidates));
+
             int randIndex = generator.nextInt(candidates.length);
             Vector2d randpos = candidates[randIndex];
+
             //missed
             if (!this.playerMap.hashMap.containsKey(randpos)) {
                 this.playerMap.hashMap.put(randpos, new Cell(randpos, CellStatus.EMPTYHIT));
-            }else if (this.playerMap.hashMap.get(randpos).cellStatus == CellStatus.AFLOAT){
+            }//hit
+            else if (this.playerMap.hashMap.get(randpos).cellStatus == CellStatus.AFLOAT){
                 Cell cell = this.playerMap.hashMap.get(randpos);
                 computerScore += cell.ship.hit();
                 this.foundShipCoordinates.add(randpos);
                 //entire ship sunk
                 if (cell.ship.isSunk()){
-
-                    //fix foundShip
                     this.foundShipCoordinates.clear();
 
                     for (Vector2d pos: cell.ship.position){
@@ -129,8 +138,6 @@ public class Battle {
                     cell.cellStatus = CellStatus.SHIPHIT;
                 }
             }
-
-
         //still searching
         }else {
 
@@ -148,47 +155,14 @@ public class Battle {
                 computerScore += cell.ship.hit();
                 cell.cellStatus = CellStatus.SHIPHIT;
 
-                //fix foundShip
                 this.foundShipCoordinates.add(randpos);
-
             }
-
-//            int toManyTimes = this.width*this.height*10;
-//            while (toManyTimes > 0){
-//                randpos = new Vector2d(generator.nextInt(this.width), generator.nextInt(this.height));
-//                //missed
-//                if (!this.playerMap.hashMap.containsKey(randpos)) {
-//                    this.playerMap.hashMap.put(randpos, new Cell(randpos, CellStatus.EMPTYHIT));
-//                    break;
-//                }
-//                //next ship has been hit for the first time
-//                if (this.playerMap.hashMap.get(randpos).cellStatus == CellStatus.AFLOAT) {
-//                    Cell cell = this.playerMap.hashMap.get(randpos);
-//                    computerScore += cell.ship.hit();
-//                    cell.cellStatus = CellStatus.SHIPHIT;
-//
-//                    //fix foundShip
-//                    this.foundShipCoordinates.add(randpos);
-//
-//                    break;
-//                }
-//                toManyTimes--;
-//            }
         }
         this.moves--;
-        if (this.moves == 0){
-            if (this.playerScore > this.computerScore){
-                System.out.println("Player won");
-            }else if (this.playerScore == this.computerScore){
-                System.out.println("Draw");
-            }else {
-                System.out.println("Computer won");
-            }
-            return true;
-        }
-        return false;
+        return this.moves == 0;
 
     }
+
     private Vector2d[] getCandidatesToShot(){
         LinkedList<Vector2d> result = new LinkedList<>();
         for (int i = 0; i < this.width; i ++){
@@ -205,7 +179,6 @@ public class Battle {
         }
         return result.toArray(new Vector2d[0]);
     }
-
     private boolean isValidCandidate(Vector2d pos){
         return this.playerMap.isInBound(pos) && (!this.playerMap.hashMap.containsKey(pos) || this.playerMap.hashMap.get(pos).cellStatus == CellStatus.AFLOAT);
     }
@@ -224,7 +197,6 @@ public class Battle {
         }
         return result.toArray(new Vector2d[0]);
     }
-
     private Vector2d[] getHorizontalNeighbors(){
         LinkedList<Vector2d> result = new LinkedList<>();
         for (Vector2d pos: this.foundShipCoordinates){
@@ -237,7 +209,6 @@ public class Battle {
         }
         return result.toArray(new Vector2d[0]);
     }
-
     private Vector2d[] getVerticalNeighbors(){
         LinkedList<Vector2d> result = new LinkedList<>();
         for (Vector2d pos: this.foundShipCoordinates){
